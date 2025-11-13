@@ -49,7 +49,8 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess }: RegistrationFormPr
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase.from("event_registrations").insert({
+      // First, insert the registration
+      const { error: insertError } = await supabase.from("event_registrations").insert({
         event_id: eventId,
         player_name: values.playerName,
         player_email: values.playerEmail,
@@ -57,7 +58,31 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess }: RegistrationFormPr
         additional_info: values.additionalInfo || null,
       });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
+      // Then send the confirmation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke(
+          "send-registration-email",
+          {
+            body: {
+              playerName: values.playerName,
+              playerEmail: values.playerEmail,
+              minecraftUsername: values.minecraftUsername,
+              eventTitle: eventTitle,
+              additionalInfo: values.additionalInfo,
+            },
+          }
+        );
+
+        if (emailError) {
+          console.error("Error sending email:", emailError);
+          // Don't throw - registration was successful even if email failed
+        }
+      } catch (emailError) {
+        console.error("Email function error:", emailError);
+        // Don't throw - registration was successful even if email failed
+      }
 
       toast({
         title: "¡Registro exitoso!",
