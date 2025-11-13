@@ -42,8 +42,7 @@ const Hero = () => {
           </h1>
 
           {/* Description */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mb-12 leading-relaxed">Hacemos eventos para la comunidad. Eventos como: Squid Games, 
-Alice in Borderland         
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mb-12 leading-relaxed">Hacemos eventos para la comunidad. Eventos como: Squid Games, Alice in Borderland, entre otros...                                                                                                                                                                                                                                                                                                                                                      
 
  
 
