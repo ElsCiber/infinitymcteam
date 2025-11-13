@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import {
@@ -12,6 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Edit, Trash2 } from "lucide-react";
 
 interface UserRole {
   id: string;
@@ -22,11 +34,39 @@ interface UserRole {
   };
 }
 
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  detailed_description: string;
+  event_date: string;
+  image_url: string;
+  status: string;
+  organizer: string;
+  players_count: string;
+  featured: boolean;
+}
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  specialty: string;
+  avatar_url: string;
+  display_order: number;
+}
+
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserRole[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +84,6 @@ const Admin = () => {
 
       setUser(session.user);
 
-      // Check if user is admin
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -60,6 +99,8 @@ const Admin = () => {
 
       setIsAdmin(true);
       loadUsers();
+      loadEvents();
+      loadTeamMembers();
     } catch (error: any) {
       toast.error("Error al verificar autenticación");
       navigate("/auth");
@@ -76,12 +117,10 @@ const Admin = () => {
 
       if (error) throw error;
 
-      // Get profiles separately
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, email");
 
-      // Combine data
       const combined = rolesData?.map(role => ({
         ...role,
         profiles: { email: profilesData?.find(p => p.id === role.user_id)?.email || "N/A" }
@@ -93,6 +132,50 @@ const Admin = () => {
     }
   };
 
+  const loadEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("event_date", { ascending: false });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error: any) {
+      toast.error("Error al cargar eventos");
+    }
+  };
+
+  const loadTeamMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("*")
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setTeamMembers(data || []);
+    } catch (error: any) {
+      toast.error("Error al cargar miembros del equipo");
+    }
+  };
+
+  const createAuditLog = async (targetUserId: string, action: string, oldRole: string, newRole: string, targetEmail: string) => {
+    try {
+      await supabase.from("audit_logs").insert({
+        admin_user_id: user?.id || null,
+        target_user_id: targetUserId,
+        action,
+        old_role: oldRole as "admin" | "user",
+        new_role: newRole as "admin" | "user",
+        admin_email: user?.email || null,
+        target_email: targetEmail,
+      });
+    } catch (error: any) {
+      console.error("Error creating audit log:", error);
+    }
+  };
+
   const promoteToAdmin = async (userId: string, currentRole: string) => {
     try {
       if (currentRole === "admin") {
@@ -100,19 +183,15 @@ const Admin = () => {
         return;
       }
 
-      // Delete current role
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
+      const targetUser = users.find(u => u.user_id === userId);
+      const targetEmail = (targetUser?.profiles as any)?.email || "N/A";
 
-      // Add admin role
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "admin" });
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
 
       if (error) throw error;
 
+      await createAuditLog(userId, "promote_to_admin", currentRole, "admin", targetEmail);
       toast.success("Usuario promovido a administrador");
       loadUsers();
     } catch (error: any) {
@@ -127,23 +206,149 @@ const Admin = () => {
         return;
       }
 
-      // Delete current role
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
+      const targetUser = users.find(u => u.user_id === userId);
+      const targetEmail = (targetUser?.profiles as any)?.email || "N/A";
 
-      // Add user role
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "user" });
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "user" });
 
       if (error) throw error;
 
+      await createAuditLog(userId, "demote_to_user", currentRole, "user", targetEmail);
       toast.success("Usuario degradado a usuario normal");
       loadUsers();
     } catch (error: any) {
       toast.error("Error al degradar usuario: " + error.message);
+    }
+  };
+
+  const uploadImage = async (file: File, folder: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${Math.random()}.${fileExt}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
+  const handleEventSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      let imageUrl = editingEvent?.image_url || "";
+      const imageFile = (formData.get("image") as File);
+      
+      if (imageFile && imageFile.size > 0) {
+        imageUrl = await uploadImage(imageFile, "events");
+      }
+
+      const eventData = {
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        detailed_description: formData.get("detailed_description") as string,
+        event_date: formData.get("event_date") as string,
+        status: formData.get("status") as string,
+        organizer: formData.get("organizer") as string,
+        players_count: formData.get("players_count") as string,
+        featured: formData.get("featured") === "on",
+        image_url: imageUrl,
+      };
+
+      if (editingEvent) {
+        const { error } = await supabase
+          .from("events")
+          .update(eventData)
+          .eq("id", editingEvent.id);
+        if (error) throw error;
+        toast.success("Evento actualizado");
+      } else {
+        const { error } = await supabase
+          .from("events")
+          .insert(eventData);
+        if (error) throw error;
+        toast.success("Evento creado");
+      }
+
+      setIsEventDialogOpen(false);
+      setEditingEvent(null);
+      loadEvents();
+    } catch (error: any) {
+      toast.error("Error al guardar evento: " + error.message);
+    }
+  };
+
+  const handleTeamSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      let avatarUrl = editingTeamMember?.avatar_url || "";
+      const avatarFile = (formData.get("avatar") as File);
+      
+      if (avatarFile && avatarFile.size > 0) {
+        avatarUrl = await uploadImage(avatarFile, "team");
+      }
+
+      const teamData = {
+        name: formData.get("name") as string,
+        role: formData.get("role") as string,
+        specialty: formData.get("specialty") as string,
+        display_order: parseInt(formData.get("display_order") as string),
+        avatar_url: avatarUrl,
+      };
+
+      if (editingTeamMember) {
+        const { error } = await supabase
+          .from("team_members")
+          .update(teamData)
+          .eq("id", editingTeamMember.id);
+        if (error) throw error;
+        toast.success("Miembro actualizado");
+      } else {
+        const { error } = await supabase
+          .from("team_members")
+          .insert(teamData);
+        if (error) throw error;
+        toast.success("Miembro creado");
+      }
+
+      setIsTeamDialogOpen(false);
+      setEditingTeamMember(null);
+      loadTeamMembers();
+    } catch (error: any) {
+      toast.error("Error al guardar miembro: " + error.message);
+    }
+  };
+
+  const deleteEvent = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este evento?")) return;
+    
+    try {
+      const { error } = await supabase.from("events").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Evento eliminado");
+      loadEvents();
+    } catch (error: any) {
+      toast.error("Error al eliminar evento");
+    }
+  };
+
+  const deleteTeamMember = async (id: string) => {
+    if (!confirm("¿Estás seguro de eliminar este miembro?")) return;
+    
+    try {
+      const { error } = await supabase.from("team_members").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Miembro eliminado");
+      loadTeamMembers();
+    } catch (error: any) {
+      toast.error("Error al eliminar miembro");
     }
   };
 
@@ -180,67 +385,275 @@ const Admin = () => {
       </nav>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Usuarios Registrados</h2>
-          
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>ID de Usuario</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((userRole) => (
-                  <TableRow key={userRole.id}>
-                    <TableCell>{(userRole.profiles as any)?.email || "N/A"}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        userRole.role === "admin" 
-                          ? "bg-primary/20 text-primary" 
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {userRole.role}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{userRole.user_id}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {userRole.role !== "admin" && (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => promoteToAdmin(userRole.user_id, userRole.role)}
-                          >
-                            Promover a Admin
-                          </Button>
-                        )}
-                        {userRole.role === "admin" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => demoteToUser(userRole.user_id, userRole.role)}
-                          >
-                            Degradar a Usuario
-                          </Button>
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="users">Usuarios</TabsTrigger>
+            <TabsTrigger value="events">Eventos</TabsTrigger>
+            <TabsTrigger value="team">Equipo</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Usuarios Registrados</h2>
+              
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Rol</TableHead>
+                      <TableHead>ID de Usuario</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((userRole) => (
+                      <TableRow key={userRole.id}>
+                        <TableCell>{(userRole.profiles as any)?.email || "N/A"}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            userRole.role === "admin" 
+                              ? "bg-primary/20 text-primary" 
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {userRole.role}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{userRole.user_id}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {userRole.role !== "admin" && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => promoteToAdmin(userRole.user_id, userRole.role)}
+                              >
+                                Promover a Admin
+                              </Button>
+                            )}
+                            {userRole.role === "admin" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => demoteToUser(userRole.user_id, userRole.role)}
+                              >
+                                Degradar a Usuario
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {users.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay usuarios registrados todavía
+                </p>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Gestión de Eventos</h2>
+                <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => setEditingEvent(null)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nuevo Evento
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{editingEvent ? "Editar Evento" : "Nuevo Evento"}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleEventSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="title">Título</Label>
+                        <Input id="title" name="title" defaultValue={editingEvent?.title} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="description">Descripción corta</Label>
+                        <Textarea id="description" name="description" defaultValue={editingEvent?.description} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="detailed_description">Descripción detallada</Label>
+                        <Textarea id="detailed_description" name="detailed_description" defaultValue={editingEvent?.detailed_description} />
+                      </div>
+                      <div>
+                        <Label htmlFor="event_date">Fecha del evento</Label>
+                        <Input id="event_date" name="event_date" type="datetime-local" defaultValue={editingEvent?.event_date?.slice(0, 16)} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="organizer">Organizador</Label>
+                        <Input id="organizer" name="organizer" defaultValue={editingEvent?.organizer} />
+                      </div>
+                      <div>
+                        <Label htmlFor="players_count">Cantidad de jugadores</Label>
+                        <Input id="players_count" name="players_count" defaultValue={editingEvent?.players_count} />
+                      </div>
+                      <div>
+                        <Label htmlFor="status">Estado</Label>
+                        <Input id="status" name="status" defaultValue={editingEvent?.status || "upcoming"} required />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="featured" name="featured" defaultChecked={editingEvent?.featured} />
+                        <Label htmlFor="featured">Destacado</Label>
+                      </div>
+                      <div>
+                        <Label htmlFor="image">Imagen</Label>
+                        <Input id="image" name="image" type="file" accept="image/*" />
+                        {editingEvent?.image_url && (
+                          <img src={editingEvent.image_url} alt="Preview" className="mt-2 h-32 object-cover rounded" />
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                      <Button type="submit" className="w-full">Guardar</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-          {users.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              No hay usuarios registrados todavía
-            </p>
-          )}
-        </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{event.title}</TableCell>
+                        <TableCell>{new Date(event.event_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{event.status}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingEvent(event);
+                                setIsEventDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteEvent(event.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="team" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Gestión del Equipo</h2>
+                <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => setEditingTeamMember(null)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nuevo Miembro
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{editingTeamMember ? "Editar Miembro" : "Nuevo Miembro"}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleTeamSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Nombre</Label>
+                        <Input id="name" name="name" defaultValue={editingTeamMember?.name} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="role">Rol</Label>
+                        <Input id="role" name="role" defaultValue={editingTeamMember?.role} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="specialty">Especialidad</Label>
+                        <Input id="specialty" name="specialty" defaultValue={editingTeamMember?.specialty} />
+                      </div>
+                      <div>
+                        <Label htmlFor="display_order">Orden de visualización</Label>
+                        <Input id="display_order" name="display_order" type="number" defaultValue={editingTeamMember?.display_order || 0} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="avatar">Avatar</Label>
+                        <Input id="avatar" name="avatar" type="file" accept="image/*" />
+                        {editingTeamMember?.avatar_url && (
+                          <img src={editingTeamMember.avatar_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-full" />
+                        )}
+                      </div>
+                      <Button type="submit" className="w-full">Guardar</Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Rol</TableHead>
+                      <TableHead>Especialidad</TableHead>
+                      <TableHead>Orden</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamMembers.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>{member.name}</TableCell>
+                        <TableCell>{member.role}</TableCell>
+                        <TableCell>{member.specialty}</TableCell>
+                        <TableCell>{member.display_order}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTeamMember(member);
+                                setIsTeamDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteTeamMember(member.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

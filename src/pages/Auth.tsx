@@ -14,6 +14,7 @@ const authSchema = z.object({
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,6 +32,31 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isResetPassword) {
+      // Handle password reset
+      if (!email) {
+        toast.error("Por favor ingresa tu email");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth?reset=true`,
+        });
+
+        if (error) throw error;
+
+        toast.success("¡Revisa tu email para restablecer tu contraseña!");
+        setIsResetPassword(false);
+      } catch (error: any) {
+        toast.error("Error al enviar email: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     // Validate input
     const result = authSchema.safeParse({ email, password });
     if (!result.success) {
@@ -89,10 +115,10 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="bg-card border border-border rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold text-center mb-2 text-primary">
-            {isLogin ? "Iniciar Sesión" : "Registrarse"}
+            {isResetPassword ? "Recuperar Contraseña" : isLogin ? "Iniciar Sesión" : "Registrarse"}
           </h1>
           <p className="text-center text-muted-foreground mb-8">
-            {isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}
+            {isResetPassword ? "Te enviaremos un email para restablecer tu contraseña" : isLogin ? "Bienvenido de nuevo" : "Crea tu cuenta"}
           </p>
 
           <form onSubmit={handleAuth} className="space-y-6">
@@ -109,37 +135,53 @@ const Auth = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
+            {!isResetPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+            )}
 
             <Button
               type="submit"
               className="w-full"
               disabled={loading}
             >
-              {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Registrarse"}
+              {loading ? "Cargando..." : isResetPassword ? "Enviar Email" : isLogin ? "Iniciar Sesión" : "Registrarse"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            {!isResetPassword && (
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-primary hover:underline block w-full"
+                disabled={loading}
+              >
+                {isLogin
+                  ? "¿No tienes cuenta? Regístrate"
+                  : "¿Ya tienes cuenta? Inicia sesión"}
+              </button>
+            )}
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline"
+              onClick={() => {
+                setIsResetPassword(!isResetPassword);
+                setPassword("");
+              }}
+              className="text-primary hover:underline block w-full"
               disabled={loading}
             >
-              {isLogin
-                ? "¿No tienes cuenta? Regístrate"
-                : "¿Ya tienes cuenta? Inicia sesión"}
+              {isResetPassword
+                ? "Volver al inicio de sesión"
+                : "¿Olvidaste tu contraseña?"}
             </button>
           </div>
 
