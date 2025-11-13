@@ -59,6 +59,7 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
 
   const handleAddImage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     const formData = new FormData(e.currentTarget);
     const imageFile = formData.get("image") as File;
     const caption = formData.get("caption") as string;
@@ -82,7 +83,7 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
       if (error) throw error;
 
       toast.success("Imagen agregada a la galería");
-      loadImages();
+      await loadImages();
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
       toast.error("Error al agregar imagen: " + error.message);
@@ -112,21 +113,21 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleAddImage} className="space-y-4 p-4 border rounded-lg">
+    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={handleAddImage} className="space-y-4 p-4 border rounded-lg" onClick={(e) => e.stopPropagation()}>
         <h3 className="font-semibold">Agregar Imagen a la Galería</h3>
         <div>
-          <Label htmlFor="image">Imagen</Label>
-          <Input id="image" name="image" type="file" accept="image/*" required />
+          <Label htmlFor={`image-${eventId}`}>Imagen</Label>
+          <Input id={`image-${eventId}`} name="image" type="file" accept="image/*" required />
         </div>
         <div>
-          <Label htmlFor="caption">Descripción (opcional)</Label>
-          <Textarea id="caption" name="caption" />
+          <Label htmlFor={`caption-${eventId}`}>Descripción (opcional)</Label>
+          <Textarea id={`caption-${eventId}`} name="caption" />
         </div>
         <div>
-          <Label htmlFor="display_order">Orden</Label>
+          <Label htmlFor={`display_order-${eventId}`}>Orden</Label>
           <Input 
-            id="display_order" 
+            id={`display_order-${eventId}`} 
             name="display_order" 
             type="number" 
             defaultValue={images.length} 
