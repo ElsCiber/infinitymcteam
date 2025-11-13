@@ -9,8 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventCountdown from "./EventCountdown";
 import EventGallery from "./EventGallery";
 import RegistrationForm from "./RegistrationForm";
+import EventPlayers from "./EventPlayers";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useState as useAuthState, useEffect as useAuthEffect } from "react";
 
 interface Event {
   id: string;
@@ -39,6 +43,17 @@ interface EventModalProps {
 const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useAuthEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+  };
 
   useEffect(() => {
     if (event && isOpen) {
@@ -206,20 +221,38 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
 
           <TabsContent value="register" className="mt-6">
             {event.status === "upcoming" ? (
-              <div className="space-y-4">
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-2">Registro para {event.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Completa el formulario para registrarte en este evento.
-                  </p>
+              <div className="space-y-6">
+                {!isAuthenticated ? (
+                  <div className="bg-card border border-border rounded-lg p-8 text-center">
+                    <h3 className="text-xl font-bold mb-4">Inicia sesión para registrarte</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Necesitas tener una cuenta para registrarte en eventos.
+                    </p>
+                    <Button onClick={() => navigate("/auth")}>
+                      Ir a iniciar sesión
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <h3 className="text-lg font-bold mb-2">Registro para {event.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Completa el formulario para registrarte en este evento.
+                      </p>
+                    </div>
+                    <RegistrationForm
+                      eventId={event.id}
+                      eventTitle={event.title}
+                      onSuccess={() => {
+                        setTimeout(() => onClose(), 2000);
+                      }}
+                    />
+                  </>
+                )}
+                
+                <div className="mt-8">
+                  <EventPlayers eventId={event.id} />
                 </div>
-                <RegistrationForm
-                  eventId={event.id}
-                  eventTitle={event.title}
-                  onSuccess={() => {
-                    setTimeout(() => onClose(), 2000);
-                  }}
-                />
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
