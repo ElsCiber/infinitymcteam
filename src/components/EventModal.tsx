@@ -222,6 +222,11 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
           <TabsContent value="register" className="mt-6">
             {event.status === "upcoming" ? (
               <div className="space-y-6">
+                <EventPlayers 
+                  eventId={event.id} 
+                  maxPlayers={event.players_count ? parseInt(event.players_count) : undefined}
+                />
+                
                 {!isAuthenticated ? (
                   <div className="bg-card border border-border rounded-lg p-8 text-center">
                     <h3 className="text-xl font-bold mb-4">Inicia sesión para registrarte</h3>
@@ -243,16 +248,13 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
                     <RegistrationForm
                       eventId={event.id}
                       eventTitle={event.title}
+                      maxPlayers={event.players_count ? parseInt(event.players_count) : undefined}
                       onSuccess={() => {
                         setTimeout(() => onClose(), 2000);
                       }}
                     />
                   </>
                 )}
-                
-                <div className="mt-8">
-                  <EventPlayers eventId={event.id} />
-                </div>
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
