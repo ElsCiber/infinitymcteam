@@ -93,6 +93,60 @@ const Admin = () => {
     }
   };
 
+  const promoteToAdmin = async (userId: string, currentRole: string) => {
+    try {
+      if (currentRole === "admin") {
+        toast.error("Este usuario ya es administrador");
+        return;
+      }
+
+      // Delete current role
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      // Add admin role
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "admin" });
+
+      if (error) throw error;
+
+      toast.success("Usuario promovido a administrador");
+      loadUsers();
+    } catch (error: any) {
+      toast.error("Error al promover usuario: " + error.message);
+    }
+  };
+
+  const demoteToUser = async (userId: string, currentRole: string) => {
+    try {
+      if (currentRole === "user") {
+        toast.error("Este usuario ya es un usuario normal");
+        return;
+      }
+
+      // Delete current role
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      // Add user role
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "user" });
+
+      if (error) throw error;
+
+      toast.success("Usuario degradado a usuario normal");
+      loadUsers();
+    } catch (error: any) {
+      toast.error("Error al degradar usuario: " + error.message);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Sesión cerrada");
@@ -136,6 +190,7 @@ const Admin = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>ID de Usuario</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -152,6 +207,28 @@ const Admin = () => {
                       </span>
                     </TableCell>
                     <TableCell className="font-mono text-xs">{userRole.user_id}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {userRole.role !== "admin" && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => promoteToAdmin(userRole.user_id, userRole.role)}
+                          >
+                            Promover a Admin
+                          </Button>
+                        )}
+                        {userRole.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => demoteToUser(userRole.user_id, userRole.role)}
+                          >
+                            Degradar a Usuario
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
