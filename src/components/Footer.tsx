@@ -18,17 +18,7 @@ const Footer = () => {
           </div>
 
           {/* Links */}
-          <div className="flex gap-6 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-              Términos
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-              Privacidad
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-              Contacto
-            </a>
-          </div>
+          
         </div>
       </div>
     </footer>;
