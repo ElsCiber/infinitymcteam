@@ -30,7 +30,7 @@ const Hero = () => {
         <div className="flex flex-col items-center text-center animate-fade-in">
           {/* Logo */}
           <div className="mb-8 animate-float">
-            <img src={infinityLogo} alt="Infinity Team" className="w-40 h-40 md:w-56 md:h-56 animate-glow" />
+            <img src={infinityLogo} alt="Infinity Team" className="w-40 h-40 md:w-56 md:h-56" />
           </div>
 
           {/* Headline */}
