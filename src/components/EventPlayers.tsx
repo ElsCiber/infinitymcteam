@@ -3,23 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-interface Player {
-  id: string;
-  player_name: string;
-  minecraft_username: string;
-  created_at: string;
-}
-
 interface EventPlayersProps {
   eventId: string;
+  maxPlayers?: number;
 }
 
-const EventPlayers = ({ eventId }: EventPlayersProps) => {
-  const [players, setPlayers] = useState<Player[]>([]);
+const EventPlayers = ({ eventId, maxPlayers }: EventPlayersProps) => {
+  const [playerCount, setPlayerCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadPlayers();
+    loadPlayerCount();
     
     const channel = supabase
       .channel(`event-${eventId}-registrations`)
@@ -32,7 +26,7 @@ const EventPlayers = ({ eventId }: EventPlayersProps) => {
           filter: `event_id=eq.${eventId}`
         },
         () => {
-          loadPlayers();
+          loadPlayerCount();
         }
       )
       .subscribe();
@@ -42,18 +36,17 @@ const EventPlayers = ({ eventId }: EventPlayersProps) => {
     };
   }, [eventId]);
 
-  const loadPlayers = async () => {
+  const loadPlayerCount = async () => {
     try {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from("event_registrations")
-        .select("id, player_name, minecraft_username, created_at")
-        .eq("event_id", eventId)
-        .order("created_at", { ascending: false });
+        .select("*", { count: 'exact', head: true })
+        .eq("event_id", eventId);
 
       if (error) throw error;
-      setPlayers(data || []);
+      setPlayerCount(count || 0);
     } catch (error) {
-      console.error("Error loading players:", error);
+      console.error("Error loading player count:", error);
     } finally {
       setIsLoading(false);
     }
@@ -61,47 +54,26 @@ const EventPlayers = ({ eventId }: EventPlayersProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center items-center py-4">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (players.length === 0) {
-    return (
-      <Card className="p-8 text-center">
-        <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-        <p className="text-muted-foreground">Aún no hay jugadores registrados</p>
-      </Card>
-    );
-  }
+  const isFull = maxPlayers ? playerCount >= maxPlayers : false;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Users className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">
-          Jugadores Registrados ({players.length})
+    <Card className="p-6 text-center">
+      <Users className="w-12 h-12 mx-auto mb-4 text-primary" />
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold">
+          {playerCount} {maxPlayers ? `/ ${maxPlayers}` : ""}
         </h3>
+        <p className="text-sm text-muted-foreground">
+          {isFull ? "¡Cupos completos!" : "Jugadores registrados"}
+        </p>
       </div>
-      <div className="grid gap-3">
-        {players.map((player) => (
-          <Card key={player.id} className="p-4 hover:border-primary transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">{player.player_name}</p>
-                <p className="text-sm text-muted-foreground">
-                  @{player.minecraft_username}
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {new Date(player.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+    </Card>
   );
 };
 

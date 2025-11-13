@@ -29,9 +29,10 @@ interface RegistrationFormProps {
   eventId: string;
   eventTitle: string;
   onSuccess?: () => void;
+  maxPlayers?: number;
 }
 
-const RegistrationForm = ({ eventId, eventTitle, onSuccess }: RegistrationFormProps) => {
+const RegistrationForm = ({ eventId, eventTitle, onSuccess, maxPlayers }: RegistrationFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -56,6 +57,42 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess }: RegistrationFormPr
         toast({
           title: "Debes iniciar sesión",
           description: "Necesitas tener una cuenta para registrarte en eventos.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if event is full
+      if (maxPlayers) {
+        const { count } = await supabase
+          .from("event_registrations")
+          .select("*", { count: 'exact', head: true })
+          .eq("event_id", eventId);
+
+        if (count && count >= maxPlayers) {
+          toast({
+            title: "Evento lleno",
+            description: "Lo sentimos, este evento ya alcanzó su capacidad máxima.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Check if user is already registered
+      const { data: existingRegistration } = await supabase
+        .from("event_registrations")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingRegistration) {
+        toast({
+          title: "Ya estás registrado",
+          description: "Ya te has registrado en este evento.",
           variant: "destructive",
         });
         setIsSubmitting(false);

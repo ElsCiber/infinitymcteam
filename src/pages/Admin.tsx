@@ -58,6 +58,29 @@ interface TeamMember {
   role_color: string;
 }
 
+interface Registration {
+  id: string;
+  player_name: string;
+  player_email: string;
+  minecraft_username: string;
+  additional_info?: string;
+  created_at: string;
+  event_id: string;
+  events?: {
+    title: string;
+  };
+}
+
+interface AuditLog {
+  id: string;
+  created_at: string;
+  admin_email: string;
+  target_email: string;
+  action: string;
+  old_role: string;
+  new_role: string;
+}
+
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -65,6 +88,8 @@ const Admin = () => {
   const [users, setUsers] = useState<UserRole[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
@@ -103,6 +128,8 @@ const Admin = () => {
       loadUsers();
       loadEvents();
       loadTeamMembers();
+      loadRegistrations();
+      loadAuditLogs();
     } catch (error: any) {
       toast.error("Error al verificar autenticación");
       navigate("/auth");
@@ -159,6 +186,35 @@ const Admin = () => {
       setTeamMembers(data || []);
     } catch (error: any) {
       toast.error("Error al cargar miembros del equipo");
+    }
+  };
+
+  const loadRegistrations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("event_registrations")
+        .select("*, events(title)")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setRegistrations(data || []);
+    } catch (error: any) {
+      toast.error("Error al cargar inscripciones");
+    }
+  };
+
+  const loadAuditLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setAuditLogs(data || []);
+    } catch (error: any) {
+      toast.error("Error al cargar logs de auditoría");
     }
   };
 
@@ -389,10 +445,12 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="users">Usuarios</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
+            <TabsTrigger value="registrations">Inscripciones</TabsTrigger>
             <TabsTrigger value="team">Equipo</TabsTrigger>
+            <TabsTrigger value="audit">Auditoría</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
@@ -683,6 +741,115 @@ const Admin = () => {
                   </TableBody>
                 </Table>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="registrations" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Inscripciones a Eventos</h2>
+              
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Jugador</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Usuario Minecraft</TableHead>
+                      <TableHead>Fecha</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {registrations.map((reg) => (
+                      <TableRow key={reg.id}>
+                        <TableCell className="font-medium">
+                          {(reg.events as any)?.title || "N/A"}
+                        </TableCell>
+                        <TableCell>{reg.player_name}</TableCell>
+                        <TableCell>{reg.player_email}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          @{reg.minecraft_username}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(reg.created_at).toLocaleString('es-ES')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {registrations.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay inscripciones todavía
+                </p>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Historial de Auditoría</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Registro de cambios de roles y acciones administrativas
+              </p>
+              
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Admin</TableHead>
+                      <TableHead>Usuario Afectado</TableHead>
+                      <TableHead>Acción</TableHead>
+                      <TableHead>Cambio de Rol</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-sm">
+                          {new Date(log.created_at).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {log.admin_email || "Sistema"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {log.target_email}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            log.action === "promote_to_admin" 
+                              ? "bg-green-500/20 text-green-400" 
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }`}>
+                            {log.action === "promote_to_admin" ? "Promovido a Admin" : "Degradado a Usuario"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <span className="text-muted-foreground">{log.old_role}</span>
+                          {" → "}
+                          <span className={log.new_role === "admin" ? "text-primary font-semibold" : ""}>
+                            {log.new_role}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {auditLogs.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay registros de auditoría todavía
+                </p>
+              )}
             </div>
           </TabsContent>
         </Tabs>
