@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import GalleryManager from "@/components/GalleryManager";
 
 interface UserRole {
   id: string;
@@ -54,6 +55,7 @@ interface TeamMember {
   specialty: string;
   avatar_url: string;
   display_order: number;
+  role_color: string;
 }
 
 const Admin = () => {
@@ -301,6 +303,7 @@ const Admin = () => {
         specialty: formData.get("specialty") as string,
         display_order: parseInt(formData.get("display_order") as string),
         avatar_url: avatarUrl,
+        role_color: formData.get("role_color") as string,
       };
 
       if (editingTeamMember) {
@@ -511,6 +514,14 @@ const Admin = () => {
                           <img src={editingEvent.image_url} alt="Preview" className="mt-2 h-32 object-cover rounded" />
                         )}
                       </div>
+                      
+                      {editingEvent && (
+                        <div className="border-t pt-4">
+                          <h3 className="font-semibold mb-2">Gestión de Galería</h3>
+                          <GalleryManager eventId={editingEvent.id} />
+                        </div>
+                      )}
+                      
                       <Button type="submit" className="w-full">Guardar</Button>
                     </form>
                   </DialogContent>
@@ -589,6 +600,27 @@ const Admin = () => {
                       <div>
                         <Label htmlFor="specialty">Especialidad</Label>
                         <Input id="specialty" name="specialty" defaultValue={editingTeamMember?.specialty} />
+                      </div>
+                      <div>
+                        <Label htmlFor="role_color">Color del Rol</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            id="role_color" 
+                            name="role_color" 
+                            type="color" 
+                            defaultValue={editingTeamMember?.role_color || '#ffffff'} 
+                            className="w-20 h-10"
+                          />
+                          <Input 
+                            type="text" 
+                            defaultValue={editingTeamMember?.role_color || '#ffffff'} 
+                            className="flex-1"
+                            onChange={(e) => {
+                              const colorInput = document.getElementById('role_color') as HTMLInputElement;
+                              if (colorInput) colorInput.value = e.target.value;
+                            }}
+                          />
+                        </div>
                       </div>
                       <div>
                         <Label htmlFor="display_order">Orden de visualización</Label>

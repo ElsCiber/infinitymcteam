@@ -7,6 +7,7 @@ interface TeamMember {
   role: string;
   specialty?: string;
   avatar_url?: string;
+  role_color?: string;
 }
 const Team = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -53,7 +54,10 @@ const Team = () => {
                 {member.avatar_url ? <img src={member.avatar_url} alt={member.name} className="w-full h-full rounded-full object-cover" /> : "⭐"}
               </div>
               <div>
-                <p className="text-xs text-primary font-bold uppercase tracking-wider mb-1">
+                <p 
+                  className="text-xs font-bold uppercase tracking-wider mb-1"
+                  style={{ color: member.role_color || 'hsl(var(--primary))' }}
+                >
                   {member.role}
                 </p>
                 <h3 className="text-2xl font-bold mb-2">{member.name}</h3>

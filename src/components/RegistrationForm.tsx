@@ -49,9 +49,23 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess }: RegistrationFormPr
     setIsSubmitting(true);
     
     try {
-      // First, insert the registration
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Debes iniciar sesión",
+          description: "Necesitas tener una cuenta para registrarte en eventos.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Insert the registration with user_id
       const { error: insertError } = await supabase.from("event_registrations").insert({
         event_id: eventId,
+        user_id: user.id,
         player_name: values.playerName,
         player_email: values.playerEmail,
         minecraft_username: values.minecraftUsername,
