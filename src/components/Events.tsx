@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import EventModal from "./EventModal";
-
 interface Event {
   id: string;
   title: string;
@@ -16,25 +15,23 @@ interface Event {
   image_url?: string;
   featured?: boolean;
 }
-
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   useEffect(() => {
     loadEvents();
   }, []);
-
   const loadEvents = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("event_date", { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from("events").select("*").order("event_date", {
+        ascending: false
+      });
       if (error) throw error;
       setEvents(data || []);
     } catch (error) {
@@ -43,7 +40,6 @@ const Events = () => {
       setIsLoading(false);
     }
   };
-
   const openEventModal = (event: Event) => {
     setSelectedEvent(event);
     setIsModalOpen(true);
@@ -60,7 +56,6 @@ const Events = () => {
         return "";
     }
   };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case "upcoming":
@@ -73,22 +68,17 @@ const Events = () => {
         return "";
     }
   };
-
   if (isLoading) {
-    return (
-      <section id="events" className="py-24 relative">
+    return <section id="events" className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-card to-background"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex justify-center items-center h-64">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
           </div>
         </div>
-      </section>
-    );
+      </section>;
   }
-
-  return (
-    <>
+  return <>
       <section id="events" className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-card to-background"></div>
         
@@ -97,34 +87,19 @@ const Events = () => {
             <h2 className="text-4xl md:text-6xl font-black mb-4">
               Nuestros <span className="text-primary">Eventos</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Experiencias únicas diseñadas para la comunidad de Minecraft
-            </p>
+            
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {events.map((event) => (
-              <Card
-                key={event.id}
-                className="group relative overflow-hidden bg-card border-border hover:border-primary transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
-                onClick={() => openEventModal(event)}
-              >
+            {events.map(event => <Card key={event.id} className="group relative overflow-hidden bg-card border-border hover:border-primary transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-primary/20" onClick={() => openEventModal(event)}>
                 {/* Image */}
                 <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={event.image_url || "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&q=80"}
-                    alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  <img src={event.image_url || "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&q=80"} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
                 
                 {/* Status Badge */}
                 <div className="absolute top-4 right-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
-                      event.status
-                    )}`}
-                  >
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(event.status)}`}>
                     {getStatusText(event.status)}
                   </span>
                 </div>
@@ -136,46 +111,31 @@ const Events = () => {
                     {event.title}
                   </h3>
                   
-                  {event.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                  {event.description && <p className="text-sm text-muted-foreground line-clamp-2">
                       {event.description}
-                    </p>
-                  )}
+                    </p>}
                   
-                  {event.players_count && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {event.players_count && <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <span className="text-primary">👥</span>
                       {event.players_count}
-                    </p>
-                  )}
+                    </p>}
                   
-                  {event.event_date && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {event.event_date && <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <span className="text-primary">📅</span>
                       {new Date(event.event_date).toLocaleDateString("es-ES")}
-                    </p>
-                  )}
+                    </p>}
                   
-                  {event.organizer && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {event.organizer && <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <span className="text-primary">⚡</span>
                       {event.organizer}
-                    </p>
-                  )}
+                    </p>}
                 </div>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
 
-      <EventModal
-        event={selectedEvent}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </>
-  );
+      <EventModal event={selectedEvent} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>;
 };
-
 export default Events;
