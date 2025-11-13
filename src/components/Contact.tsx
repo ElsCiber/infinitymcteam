@@ -13,24 +13,26 @@ const Contact = () => {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
-              <a href="https://discord.com/invite/uCxQVJSguB" target="_blank" rel="noopener noreferrer">
+            <a href="https://discord.com/invite/uCxQVJSguB" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary">
                 Discord
-              </a>
-            </Button>
-            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
-              <a href="https://x.com/InfinityTeamMC" target="_blank" rel="noopener noreferrer">
+              </Button>
+            </a>
+            <a href="https://x.com/InfinityTeamMC" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary">
                 X
-              </a>
-            </Button>
-            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
-              <a href="https://www.youtube.com/@InfinityTeamMC" target="_blank" rel="noopener noreferrer">
+              </Button>
+            </a>
+            <a href="https://www.youtube.com/@InfinityTeamMC" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary">
                 YouTube
-              </a>
-            </Button>
-            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
-              <a href="https://ko-fi.com/infinityteam" target="_blank" rel="noopener noreferrer">Ko-Fi</a>
-            </Button>
+              </Button>
+            </a>
+            <a href="https://ko-fi.com/infinityteam" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary">
+                Ko-Fi
+              </Button>
+            </a>
           </div>
         </div>
       </div>
