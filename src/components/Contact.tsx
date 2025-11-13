@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
-
 const Contact = () => {
-  return (
-    <section id="contact" className="py-24 relative">
+  return <section id="contact" className="py-24 relative">
       <div className="absolute inset-0 bg-gradient-to-t from-card to-background"></div>
       
       <div className="container mx-auto px-4 relative z-10">
@@ -15,51 +13,27 @@ const Contact = () => {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
-            <Button 
-              variant="hero-outline" 
-              size="lg" 
-              className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" 
-              asChild
-            >
+            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
               <a href="https://discord.com/invite/uCxQVJSguB" target="_blank" rel="noopener noreferrer">
                 Discord
               </a>
             </Button>
-            <Button 
-              variant="hero-outline" 
-              size="lg" 
-              className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" 
-              asChild
-            >
+            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
               <a href="https://x.com/InfinityTeamMC" target="_blank" rel="noopener noreferrer">
-                Twitter
+                X
               </a>
             </Button>
-            <Button 
-              variant="hero-outline" 
-              size="lg" 
-              className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" 
-              asChild
-            >
+            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
               <a href="https://www.youtube.com/@InfinityTeamMC" target="_blank" rel="noopener noreferrer">
                 YouTube
               </a>
             </Button>
-            <Button 
-              variant="hero-outline" 
-              size="lg" 
-              className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" 
-              asChild
-            >
-              <a href="https://ko-fi.com/infinityteam" target="_blank" rel="noopener noreferrer">
-                Instagram
-              </a>
+            <Button variant="hero-outline" size="lg" className="min-w-[180px] hover:bg-primary hover:text-primary-foreground hover:border-primary" asChild>
+              <a href="https://ko-fi.com/infinityteam" target="_blank" rel="noopener noreferrer">Ko-Fi</a>
             </Button>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Contact;
