@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import infinityLogo from "@/assets/infinity-logo.png";
+import infinityLogo from "@/assets/infinity-logo-transparent.png";
 const Hero = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
