@@ -20,7 +20,76 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Create Supabase client for user verification
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization header required" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    // Verify the user is authenticated
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Authentication error:", userError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Verify the user has admin role
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (rolesError) {
+      console.error("Error fetching user roles:", rolesError);
+      return new Response(
+        JSON.stringify({ error: "Error verifying permissions" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const isAdmin = roles?.some((r) => r.role === "admin");
+    if (!isAdmin) {
+      console.error("User is not an admin:", user.id);
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Use service role for notification creation
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
@@ -30,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending notifications for event:", eventId);
 
     // Get all users
-    const { data: users, error: usersError } = await supabase
+    const { data: users, error: usersError } = await supabaseAdmin
       .from("profiles")
       .select("id");
 
@@ -59,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
       read: false,
     }));
 
-    const { error: notificationError } = await supabase
+    const { error: notificationError } = await supabaseAdmin
       .from("notifications")
       .insert(notifications);
 
