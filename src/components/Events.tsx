@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import EventModal from "./EventModal";
 import EventCounter from "./EventCounter";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { es } from "date-fns/locale";
 interface Event {
   id: string;
   title: string;
@@ -129,10 +132,10 @@ const Events = () => {
                       {event.players_count}
                     </p>}
                   
-                  {event.event_date && <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="text-primary">📅</span>
-                      {new Date(event.event_date).toLocaleDateString("es-ES")}
-                    </p>}
+                   {event.event_date && <p className="text-sm text-muted-foreground flex items-center gap-2">
+                       <span className="text-primary">📅</span>
+                       {format(toZonedTime(new Date(event.event_date), 'Europe/Madrid'), "d 'de' MMMM 'de' yyyy", { locale: es })} - CET
+                     </p>}
                   
                   {event.organizer && <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <span className="text-primary">⚡</span>

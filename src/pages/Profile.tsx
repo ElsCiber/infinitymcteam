@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import { Trash2, Calendar, Users, ArrowLeft } from "lucide-react";
+import { Trash2, Calendar, Users, ArrowLeft, Award } from "lucide-react";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { es } from "date-fns/locale";
+import UserBadge from "@/components/UserBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,15 +35,45 @@ interface Registration {
   };
 }
 
+interface Profile {
+  events_attended: number;
+}
+
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel(`user-${user.id}-registrations`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_registrations',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          loadRegistrations(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const checkAuth = async () => {
     try {
@@ -51,12 +85,30 @@ const Profile = () => {
       }
 
       setUser(session.user);
-      loadRegistrations(session.user.id);
+      await Promise.all([
+        loadRegistrations(session.user.id),
+        loadProfile(session.user.id)
+      ]);
     } catch (error: any) {
       toast.error("Error al verificar autenticación");
       navigate("/auth");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("events_attended")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error("Error loading profile:", error);
     }
   };
 
@@ -97,13 +149,16 @@ const Profile = () => {
       if (error) throw error;
 
       toast.success("Inscripción cancelada exitosamente");
-      if (user) {
-        loadRegistrations(user.id);
-      }
     } catch (error) {
       console.error("Error canceling registration:", error);
       toast.error("Error al cancelar inscripción");
     }
+  };
+
+  const formatEventDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const cetDate = toZonedTime(date, 'Europe/Madrid');
+    return format(cetDate, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es });
   };
 
   const handleLogout = async () => {
@@ -132,6 +187,12 @@ const Profile = () => {
             <h1 className="text-2xl font-bold text-primary">Mi Perfil</h1>
           </div>
           <div className="flex items-center gap-4">
+            {profile && (
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-primary" />
+                <UserBadge eventsAttended={profile.events_attended} />
+              </div>
+            )}
             <span className="text-sm text-muted-foreground">{user?.email}</span>
             <Button variant="outline" onClick={handleLogout}>
               Cerrar Sesión
@@ -142,6 +203,37 @@ const Profile = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-6 h-6" />
+                Tu Progreso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-muted-foreground mb-2">Eventos asistidos</p>
+                  <p className="text-3xl font-bold">{profile?.events_attended || 0}</p>
+                </div>
+                <div>
+                  {profile && <UserBadge eventsAttended={profile.events_attended} showIcon={true} />}
+                </div>
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground">
+                {profile && profile.events_attended < 5 && (
+                  <p>¡Asiste a {5 - profile.events_attended} eventos más para obtener la insignia de Veterano!</p>
+                )}
+                {profile && profile.events_attended >= 5 && profile.events_attended < 10 && (
+                  <p>¡Asiste a {10 - profile.events_attended} eventos más para obtener la insignia Legendaria!</p>
+                )}
+                {profile && profile.events_attended >= 10 && (
+                  <p>¡Has alcanzado el nivel máximo! Eres un jugador Legendario 🏆</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -168,16 +260,10 @@ const Profile = () => {
                         )}
                         <div className="flex-1 p-4 space-y-2">
                           <h3 className="text-xl font-bold">{reg.events.title}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(reg.events.event_date).toLocaleDateString('es-ES', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
+                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                             <Calendar className="w-4 h-4" />
+                             {formatEventDate(reg.events.event_date)} CET
+                           </div>
                           <div className="space-y-1 text-sm">
                             <p><strong>Nombre:</strong> {reg.player_name}</p>
                             <p><strong>Usuario Minecraft:</strong> @{reg.minecraft_username}</p>

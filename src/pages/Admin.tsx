@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { es } from "date-fns/locale";
 import {
   Table,
   TableBody,
@@ -113,6 +116,30 @@ const Admin = () => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Subscribe to realtime updates for registrations
+    const channel = supabase
+      .channel('admin-registrations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_registrations'
+        },
+        () => {
+          loadRegistrations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
 
   const checkAuth = async () => {
     try {
@@ -705,10 +732,10 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {events.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>{event.title}</TableCell>
-                        <TableCell>{new Date(event.event_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{event.status}</TableCell>
+                       <TableRow key={event.id}>
+                         <TableCell>{event.title}</TableCell>
+                         <TableCell>{format(toZonedTime(new Date(event.event_date), 'Europe/Madrid'), "dd/MM/yyyy HH:mm", { locale: es })} CET</TableCell>
+                         <TableCell>{event.status}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button
@@ -951,24 +978,23 @@ const Admin = () => {
                             checked={reg.attended || false}
                             onChange={async (e) => {
                               try {
-                                const { error } = await supabase
-                                  .from("event_registrations")
-                                  .update({ attended: e.target.checked })
-                                  .eq("id", reg.id);
-                                
-                                if (error) throw error;
-                                loadRegistrations();
-                                toast.success(e.target.checked ? "Asistencia marcada" : "Asistencia desmarcada");
-                              } catch (error: any) {
-                                toast.error("Error al actualizar asistencia");
-                              }
-                            }}
-                            className="w-4 h-4 cursor-pointer"
-                          />
+                                 const { error } = await supabase
+                                   .from("event_registrations")
+                                   .update({ attended: e.target.checked })
+                                   .eq("id", reg.id);
+                                 
+                                 if (error) throw error;
+                                 toast.success(e.target.checked ? "Asistencia marcada" : "Asistencia desmarcada");
+                               } catch (error: any) {
+                                 toast.error("Error al actualizar asistencia");
+                               }
+                             }}
+                             className="w-4 h-4 cursor-pointer accent-primary"
+                           />
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(reg.created_at).toLocaleString('es-ES')}
-                        </TableCell>
+                         <TableCell className="text-sm text-muted-foreground">
+                           {format(toZonedTime(new Date(reg.created_at), 'Europe/Madrid'), "dd/MM/yyyy HH:mm", { locale: es })} CET
+                         </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -976,22 +1002,21 @@ const Admin = () => {
                             onClick={async () => {
                               if (confirm("¿Eliminar esta inscripción?")) {
                                 try {
-                                  const { error } = await supabase
-                                    .from("event_registrations")
-                                    .delete()
-                                    .eq("id", reg.id);
-                                  
-                                  if (error) throw error;
-                                  toast.success("Inscripción eliminada");
-                                  loadRegistrations();
-                                } catch (error: any) {
-                                  toast.error("Error al eliminar inscripción");
-                                }
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                                   const { error } = await supabase
+                                     .from("event_registrations")
+                                     .delete()
+                                     .eq("id", reg.id);
+                                   
+                                   if (error) throw error;
+                                   toast.success("Inscripción eliminada");
+                                 } catch (error: any) {
+                                   toast.error("Error al eliminar inscripción");
+                                 }
+                               }
+                             }}
+                           >
+                             <Trash2 className="w-4 h-4 text-destructive" />
+                           </Button>
                         </TableCell>
                       </TableRow>
                     ))}
