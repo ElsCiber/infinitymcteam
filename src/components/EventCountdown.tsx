@@ -41,7 +41,7 @@ const EventCountdown = ({ targetDate }: EventCountdownProps) => {
   const TimeUnit = ({ value, label }: { value: number; label: string }) => (
     <Card className="p-4 md:p-6 bg-card border-2 border-primary/30 hover:border-primary transition-all duration-300 hover:scale-105">
       <div className="text-center">
-        <div className="text-4xl md:text-6xl font-black text-primary mb-2 animate-glow">
+        <div className="text-4xl md:text-6xl font-black text-primary mb-2">
           {value.toString().padStart(2, "0")}
         </div>
         <div className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider font-bold">

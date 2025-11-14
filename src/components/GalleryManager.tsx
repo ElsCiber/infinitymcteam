@@ -71,6 +71,8 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
         return;
       }
 
+      toast.loading("Subiendo imagen...");
+
       const imageUrl = await uploadImage(imageFile);
 
       const { error } = await supabase.from("event_gallery").insert({
@@ -82,10 +84,13 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
 
       if (error) throw error;
 
+      toast.dismiss();
       toast.success("Imagen agregada a la galería");
       await loadImages();
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
+      toast.dismiss();
+      console.error("Error details:", error);
       toast.error("Error al agregar imagen: " + error.message);
     }
   };
