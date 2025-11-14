@@ -23,8 +23,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Download, CheckCircle, XCircle, Pause } from "lucide-react";
 import GalleryManager from "@/components/GalleryManager";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserRole {
   id: string;
@@ -46,6 +53,7 @@ interface Event {
   organizer: string;
   players_count: string;
   featured: boolean;
+  registration_status?: string;
 }
 
 interface TeamMember {
@@ -94,6 +102,9 @@ const Admin = () => {
   const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [registrationSearch, setRegistrationSearch] = useState("");
+  const [auditSearch, setAuditSearch] = useState("");
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -411,6 +422,61 @@ const Admin = () => {
     }
   };
 
+  const updateRegistrationStatus = async (eventId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ registration_status: status })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      toast.success(`Inscripciones ${status === 'open' ? 'abiertas' : status === 'closed' ? 'cerradas' : 'pausadas'}`);
+      loadEvents();
+    } catch (error: any) {
+      toast.error("Error al actualizar estado de inscripciones");
+    }
+  };
+
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(item => 
+      Object.values(item).map(val => 
+        typeof val === 'string' && val.includes(',') ? `"${val}"` : val
+      ).join(",")
+    );
+
+    const csv = [headers, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const filteredRegistrations = registrations.filter(reg => {
+    const matchesSearch = reg.player_name.toLowerCase().includes(registrationSearch.toLowerCase()) ||
+      reg.player_email.toLowerCase().includes(registrationSearch.toLowerCase()) ||
+      reg.minecraft_username.toLowerCase().includes(registrationSearch.toLowerCase());
+    
+    const matchesEvent = selectedEventFilter === "all" || reg.event_id === selectedEventFilter;
+    
+    return matchesSearch && matchesEvent;
+  });
+
+  const filteredAuditLogs = auditLogs.filter(log =>
+    log.admin_email.toLowerCase().includes(auditSearch.toLowerCase()) ||
+    log.target_email.toLowerCase().includes(auditSearch.toLowerCase()) ||
+    log.action.toLowerCase().includes(auditSearch.toLowerCase())
+  );
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Sesión cerrada");
@@ -593,6 +659,7 @@ const Admin = () => {
                       <TableHead>Título</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead>Inscripciones</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -602,6 +669,34 @@ const Admin = () => {
                         <TableCell>{event.title}</TableCell>
                         <TableCell>{new Date(event.event_date).toLocaleDateString()}</TableCell>
                         <TableCell>{event.status}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant={event.registration_status === 'open' ? 'default' : 'outline'}
+                              onClick={() => updateRegistrationStatus(event.id, 'open')}
+                              title="Abrir inscripciones"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={event.registration_status === 'paused' ? 'default' : 'outline'}
+                              onClick={() => updateRegistrationStatus(event.id, 'paused')}
+                              title="Pausar inscripciones"
+                            >
+                              <Pause className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={event.registration_status === 'closed' ? 'default' : 'outline'}
+                              onClick={() => updateRegistrationStatus(event.id, 'closed')}
+                              title="Cerrar inscripciones"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -746,7 +841,45 @@ const Admin = () => {
 
           <TabsContent value="registrations" className="space-y-4">
             <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Inscripciones a Eventos</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Inscripciones a Eventos</h2>
+                <Button
+                  onClick={() => exportToCSV(filteredRegistrations.map(r => ({
+                    evento: (r.events as any)?.title || "N/A",
+                    jugador: r.player_name,
+                    email: r.player_email,
+                    minecraft: r.minecraft_username,
+                    fecha: new Date(r.created_at).toLocaleString('es-ES')
+                  })), 'inscripciones')}
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar CSV
+                </Button>
+              </div>
+
+              <div className="flex gap-4 mb-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Buscar por nombre, email o usuario de Minecraft..."
+                    value={registrationSearch}
+                    onChange={(e) => setRegistrationSearch(e.target.value)}
+                  />
+                </div>
+                <Select value={selectedEventFilter} onValueChange={setSelectedEventFilter}>
+                  <SelectTrigger className="w-[250px]">
+                    <SelectValue placeholder="Filtrar por evento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los eventos</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
               <div className="rounded-md border">
                 <Table>
@@ -760,7 +893,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {registrations.map((reg) => (
+                    {filteredRegistrations.map((reg) => (
                       <TableRow key={reg.id}>
                         <TableCell className="font-medium">
                           {(reg.events as any)?.title || "N/A"}
@@ -779,9 +912,11 @@ const Admin = () => {
                 </Table>
               </div>
 
-              {registrations.length === 0 && (
+              {filteredRegistrations.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
-                  No hay inscripciones todavía
+                  {registrationSearch || selectedEventFilter !== "all" 
+                    ? "No se encontraron inscripciones con esos filtros" 
+                    : "No hay inscripciones todavía"}
                 </p>
               )}
             </div>
@@ -789,10 +924,36 @@ const Admin = () => {
 
           <TabsContent value="audit" className="space-y-4">
             <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Historial de Auditoría</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Registro de cambios de roles y acciones administrativas
-              </p>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Historial de Auditoría</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Registro de cambios de roles y acciones administrativas
+                  </p>
+                </div>
+                <Button
+                  onClick={() => exportToCSV(filteredAuditLogs.map(l => ({
+                    fecha: new Date(l.created_at).toLocaleString('es-ES'),
+                    admin: l.admin_email || "Sistema",
+                    usuario_afectado: l.target_email,
+                    accion: l.action,
+                    rol_anterior: l.old_role,
+                    rol_nuevo: l.new_role
+                  })), 'auditoria')}
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar CSV
+                </Button>
+              </div>
+
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar por email de admin, usuario o acción..."
+                  value={auditSearch}
+                  onChange={(e) => setAuditSearch(e.target.value)}
+                />
+              </div>
               
               <div className="rounded-md border">
                 <Table>
@@ -806,7 +967,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {auditLogs.map((log) => (
+                    {filteredAuditLogs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-sm">
                           {new Date(log.created_at).toLocaleString('es-ES', {
@@ -845,9 +1006,9 @@ const Admin = () => {
                 </Table>
               </div>
 
-              {auditLogs.length === 0 && (
+              {filteredAuditLogs.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
-                  No hay registros de auditoría todavía
+                  {auditSearch ? "No se encontraron registros con esa búsqueda" : "No hay registros de auditoría todavía"}
                 </p>
               )}
             </div>
