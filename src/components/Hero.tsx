@@ -10,19 +10,22 @@ const Hero = () => {
     }
   };
   return <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card">
-        <div className="absolute inset-0 opacity-20">
-          {[...Array(20)].map((_, i) => <div key={i} className="absolute rounded-full bg-primary animate-float" style={{
-          width: Math.random() * 300 + 50 + "px",
-          height: Math.random() * 300 + 50 + "px",
-          left: Math.random() * 100 + "%",
-          top: Math.random() * 100 + "%",
-          animationDelay: Math.random() * 5 + "s",
-          animationDuration: Math.random() * 10 + 10 + "s",
-          filter: "blur(60px)"
-        }} />)}
-        </div>
+      {/* Video Background */}
+      <div className="absolute inset-0">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: 'blur(8px)' }}
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+        {/* Blue overlay with opacity */}
+        <div className="absolute inset-0 bg-primary/30"></div>
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/50 to-background/70"></div>
       </div>
 
       {/* Content */}
