@@ -1,8 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Twitter, Youtube, Coffee } from "lucide-react";
+import { useRef } from "react";
+import { useParallax } from "@/hooks/useParallax";
+
 const Contact = () => {
-  return <section id="contact" className="py-24 relative">
-      <div className="absolute inset-0 bg-gradient-to-t from-card to-background"></div>
+  const contactRef = useRef<HTMLDivElement>(null);
+  const parallaxOffset = useParallax(contactRef, 0.25);
+  return <section ref={contactRef} id="contact" className="py-24 relative">
+      <div 
+        className="absolute inset-0 bg-gradient-to-t from-card to-background"
+        style={{ 
+          transform: `translateY(${parallaxOffset * 0.4}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      ></div>
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
