@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { HslColorPicker } from "react-colorful";
 
 interface SiteSetting {
   id: string;
@@ -18,6 +19,7 @@ const SiteCustomization = () => {
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
+  const [previewColors, setPreviewColors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadSettings();
@@ -36,11 +38,40 @@ const SiteCustomization = () => {
         settingsMap[setting.setting_key] = setting.setting_value;
       });
       setSettings(settingsMap);
+      setPreviewColors(settingsMap);
     } catch (error: any) {
       toast.error("Error al cargar la configuración");
       console.error(error);
     }
   };
+
+  const hslToColor = (hsl: string) => {
+    if (!hsl) return { h: 0, s: 0, l: 0 };
+    const parts = hsl.split(' ');
+    return {
+      h: parseInt(parts[0]) || 0,
+      s: parseInt(parts[1]) || 0,
+      l: parseInt(parts[2]?.replace('%', '')) || 0
+    };
+  };
+
+  const colorToHsl = (color: { h: number; s: number; l: number }) => {
+    return `${Math.round(color.h)} ${Math.round(color.s)}% ${Math.round(color.l)}%`;
+  };
+
+  useEffect(() => {
+    if (previewColors.primary_color || previewColors.secondary_color) {
+      const root = document.documentElement;
+      if (previewColors.primary_color) {
+        root.style.setProperty('--primary', previewColors.primary_color);
+        root.style.setProperty('--accent', previewColors.primary_color);
+        root.style.setProperty('--ring', previewColors.primary_color);
+      }
+      if (previewColors.secondary_color) {
+        root.style.setProperty('--secondary', previewColors.secondary_color);
+      }
+    }
+  }, [previewColors]);
 
   const updateSetting = async (key: string, value: string) => {
     try {
@@ -54,12 +85,8 @@ const SiteCustomization = () => {
       if (error) throw error;
 
       setSettings({ ...settings, [key]: value });
+      setPreviewColors({ ...previewColors, [key]: value });
       toast.success("Configuración actualizada");
-      
-      // Reload page to apply changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error: any) {
       toast.error("Error al actualizar la configuración");
       console.error(error);
@@ -76,9 +103,16 @@ const SiteCustomization = () => {
       const fileName = `${settingKey}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      const uploadOptions: any = { upsert: true };
+      
+      // Set file size limit to 100MB for videos
+      if (file.type.startsWith('video/')) {
+        uploadOptions.contentType = file.type;
+      }
+
       const { error: uploadError } = await supabase.storage
         .from("images")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, uploadOptions);
 
       if (uploadError) throw uploadError;
 
@@ -108,52 +142,70 @@ const SiteCustomization = () => {
         <CardHeader>
           <CardTitle>Colores del Sitio</CardTitle>
           <CardDescription>
-            Personaliza los colores principales del sitio (formato HSL: "189 94% 43%")
+            Selecciona los colores principales del sitio con el selector visual
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="primary_color">Color Primario</Label>
-            <div className="flex gap-2">
-              <Input
-                id="primary_color"
-                value={settings.primary_color || ""}
-                onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                placeholder="189 94% 43%"
-              />
-              <Button
-                onClick={() => updateSetting("primary_color", settings.primary_color)}
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-              </Button>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <Label>Color Primario</Label>
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <HslColorPicker
+                  color={hslToColor(previewColors.primary_color || settings.primary_color || "189 94% 43%")}
+                  onChange={(color) => {
+                    const hslValue = colorToHsl(color);
+                    setPreviewColors({ ...previewColors, primary_color: hslValue });
+                  }}
+                />
+                <div className="mt-2 text-sm text-muted-foreground">
+                  HSL: {previewColors.primary_color || settings.primary_color || "189 94% 43%"}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div
+                  className="w-32 h-32 rounded-md border"
+                  style={{ backgroundColor: `hsl(${previewColors.primary_color || settings.primary_color})` }}
+                />
+                <Button
+                  onClick={() => updateSetting("primary_color", previewColors.primary_color || settings.primary_color)}
+                  disabled={loading}
+                  className="w-32"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                </Button>
+              </div>
             </div>
-            <div
-              className="h-10 rounded-md border"
-              style={{ backgroundColor: `hsl(${settings.primary_color})` }}
-            />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="secondary_color">Color Secundario</Label>
-            <div className="flex gap-2">
-              <Input
-                id="secondary_color"
-                value={settings.secondary_color || ""}
-                onChange={(e) => setSettings({ ...settings, secondary_color: e.target.value })}
-                placeholder="0 0% 15%"
-              />
-              <Button
-                onClick={() => updateSetting("secondary_color", settings.secondary_color)}
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-              </Button>
+          <div className="space-y-4">
+            <Label>Color Secundario</Label>
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <HslColorPicker
+                  color={hslToColor(previewColors.secondary_color || settings.secondary_color || "0 0% 15%")}
+                  onChange={(color) => {
+                    const hslValue = colorToHsl(color);
+                    setPreviewColors({ ...previewColors, secondary_color: hslValue });
+                  }}
+                />
+                <div className="mt-2 text-sm text-muted-foreground">
+                  HSL: {previewColors.secondary_color || settings.secondary_color || "0 0% 15%"}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div
+                  className="w-32 h-32 rounded-md border"
+                  style={{ backgroundColor: `hsl(${previewColors.secondary_color || settings.secondary_color})` }}
+                />
+                <Button
+                  onClick={() => updateSetting("secondary_color", previewColors.secondary_color || settings.secondary_color)}
+                  disabled={loading}
+                  className="w-32"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                </Button>
+              </div>
             </div>
-            <div
-              className="h-10 rounded-md border"
-              style={{ backgroundColor: `hsl(${settings.secondary_color})` }}
-            />
           </div>
         </CardContent>
       </Card>
@@ -162,7 +214,7 @@ const SiteCustomization = () => {
         <CardHeader>
           <CardTitle>Video del Hero</CardTitle>
           <CardDescription>
-            Sube un nuevo video para la sección principal (formatos: MP4, WebM)
+            Sube un nuevo video para la sección principal (formatos: MP4, WebM, hasta 100MB)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
