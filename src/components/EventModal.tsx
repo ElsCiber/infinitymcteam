@@ -15,7 +15,6 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState as useAuthState, useEffect as useAuthEffect } from "react";
-import { EventReviews } from "./EventReviews";
 
 interface Event {
   id: string;
@@ -27,6 +26,7 @@ interface Event {
   status: string;
   organizer?: string;
   image_url?: string;
+  max_participants?: number;
 }
 
 interface GalleryImage {
@@ -148,13 +148,12 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
         )}
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="info">Información</TabsTrigger>
             <TabsTrigger value="gallery">Galería</TabsTrigger>
             <TabsTrigger value="register" disabled={event.status === "completed"}>
               Registro
             </TabsTrigger>
-            <TabsTrigger value="reviews">Valoraciones</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-6 mt-6">
@@ -226,7 +225,7 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
               <div className="space-y-6">
                 <EventPlayers 
                   eventId={event.id} 
-                  maxPlayers={event.players_count ? parseInt(event.players_count) : undefined}
+                  maxPlayers={event.max_participants}
                 />
                 
                 {!isAuthenticated ? (
@@ -250,7 +249,7 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
                     <RegistrationForm
                       eventId={event.id}
                       eventTitle={event.title}
-                      maxPlayers={event.players_count ? parseInt(event.players_count) : undefined}
+                      maxPlayers={event.max_participants}
                       onSuccess={() => {
                         setTimeout(() => onClose(), 2000);
                       }}
@@ -263,10 +262,6 @@ const EventModal = ({ event, isOpen, onClose }: EventModalProps) => {
                 <p>El registro no está disponible para este evento</p>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-6">
-            <EventReviews eventId={event.id} />
           </TabsContent>
         </Tabs>
       </DialogContent>
