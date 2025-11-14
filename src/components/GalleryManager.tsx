@@ -118,19 +118,13 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
   }
 
   return (
-    <div 
-      className="space-y-6" 
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-    >
+    <div className="space-y-6">
       <form 
         onSubmit={handleAddImage} 
-        className="space-y-4 p-4 border rounded-lg" 
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
+        className="space-y-4 p-4 border rounded-lg"
       >
         <h3 className="font-semibold">Agregar Imagen a la Galería</h3>
-        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        <div>
           <Label htmlFor={`image-${eventId}`}>Imagen</Label>
           <Input 
             id={`image-${eventId}`} 
@@ -138,20 +132,16 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
             type="file" 
             accept="image/*" 
             required 
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
           />
         </div>
-        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        <div>
           <Label htmlFor={`caption-${eventId}`}>Descripción (opcional)</Label>
           <Textarea 
             id={`caption-${eventId}`} 
             name="caption"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
           />
         </div>
-        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        <div>
           <Label htmlFor={`display_order-${eventId}`}>Orden</Label>
           <Input 
             id={`display_order-${eventId}`} 
@@ -159,15 +149,11 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
             type="number" 
             defaultValue={images.length} 
             required
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
           />
         </div>
         <Button 
           type="submit" 
           className="w-full"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
         >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Imagen
@@ -179,8 +165,6 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
           <div 
             key={image.id} 
             className="relative group border rounded-lg overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
           >
             <img 
               src={image.image_url} 
@@ -191,11 +175,7 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteImage(image.id);
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
+                onClick={() => handleDeleteImage(image.id)}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
