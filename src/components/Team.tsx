@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useParallax } from "@/hooks/useParallax";
 interface TeamMember {
   id: string;
   name: string;
@@ -13,8 +12,6 @@ interface TeamMember {
 const Team = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const teamRef = useRef<HTMLElement>(null);
-  const parallaxOffset = useParallax(teamRef, -0.15);
   useEffect(() => {
     loadTeamMembers();
   }, []);
@@ -42,15 +39,7 @@ const Team = () => {
         </div>
       </section>;
   }
-  return <section 
-      ref={teamRef} 
-      id="team" 
-      className="py-24 relative bg-card"
-      style={{ 
-        transform: `translateY(${parallaxOffset * 0.5}px)`,
-        transition: 'transform 0.1s ease-out'
-      }}
-    >
+  return <section id="team" className="py-24 relative bg-card">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-6xl font-black mb-4">
