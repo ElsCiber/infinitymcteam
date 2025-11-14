@@ -2,3 +2,6 @@ project_id = "xftyjigqppbsthdznaex"
 
 [functions.send-registration-email]
 verify_jwt = false
+
+[functions.check-low-capacity]
+verify_jwt = false

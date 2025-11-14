@@ -519,6 +519,9 @@ const Admin = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">Panel de Administración</h1>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              Volver al Inicio
+            </Button>
             <span className="text-sm text-muted-foreground">{user?.email}</span>
             <Button variant="outline" onClick={handleLogout}>
               Cerrar Sesión

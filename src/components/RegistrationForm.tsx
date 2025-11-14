@@ -144,6 +144,19 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess, maxPlayers }: Regist
 
       if (insertError) throw insertError;
 
+      // Check if event is running low on capacity
+      try {
+        await supabase.functions.invoke("check-low-capacity", {
+          body: {
+            eventId: eventId,
+            newRegistrationUserId: user.id,
+          },
+        });
+      } catch (capacityError) {
+        console.error("Error checking capacity:", capacityError);
+        // Don't throw - registration was successful
+      }
+
       // Then send the confirmation email
       try {
         const { error: emailError } = await supabase.functions.invoke(
