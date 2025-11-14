@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { LogIn, LogOut, Shield, User as UserIcon } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 const Navigation = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -83,6 +84,7 @@ const Navigation = () => {
           {/* Auth & CTA Buttons */}
           <div className="flex items-center gap-4">
             {user ? <>
+                <NotificationBell />
                 <Button
                   variant="outline"
                   size="default"
