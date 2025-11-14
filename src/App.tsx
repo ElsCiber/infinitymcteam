@@ -8,12 +8,14 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
+import DynamicTheme from "./components/DynamicTheme";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <DynamicTheme />
       <Toaster />
       <Sonner />
       <BrowserRouter>

@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import infinityLogo from "@/assets/infinity-logo-transparent.png";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const Hero = () => {
+  const { settings } = useSiteSettings();
+  
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -22,7 +25,7 @@ const Hero = () => {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: 'blur(8px)', contentVisibility: 'auto' }}
         >
-          <source src="/hero-video.mp4" type="video/mp4" />
+          <source src={settings.hero_video || "/hero-video.mp4"} type="video/mp4" />
         </video>
         {/* Blue overlay with opacity */}
         <div className="absolute inset-0 bg-primary/30"></div>
@@ -35,7 +38,7 @@ const Hero = () => {
         <div className="flex flex-col items-center text-center animate-fade-in">
           {/* Logo */}
           <div className="mb-8 animate-float">
-            <img src={infinityLogo} alt="Infinity Team" className="w-40 h-40 md:w-56 md:h-56" />
+            <img src={settings.logo_url || infinityLogo} alt="Infinity Team" className="w-40 h-40 md:w-56 md:h-56" />
           </div>
 
           {/* Headline */}

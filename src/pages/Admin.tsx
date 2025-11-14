@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Download, CheckCircle, XCircle, Pause } from "lucide-react";
 import GalleryManager from "@/components/GalleryManager";
 import DashboardStats from "@/components/DashboardStats";
+import SiteCustomization from "@/components/SiteCustomization";
 import {
   Select,
   SelectContent,
@@ -559,13 +560,14 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="users">Usuarios</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
             <TabsTrigger value="registrations">Inscripciones</TabsTrigger>
             <TabsTrigger value="team">Equipo</TabsTrigger>
             <TabsTrigger value="audit">Auditoría</TabsTrigger>
+            <TabsTrigger value="customization">Personalización</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
@@ -1123,6 +1125,13 @@ const Admin = () => {
                   {auditSearch ? "No se encontraron registros con esa búsqueda" : "No hay registros de auditoría todavía"}
                 </p>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="customization" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-6">Personalización del Sitio</h2>
+              <SiteCustomization />
             </div>
           </TabsContent>
         </Tabs>
