@@ -915,6 +915,7 @@ const Admin = () => {
                       <TableHead>Usuario Minecraft</TableHead>
                       <TableHead>Asistió</TableHead>
                       <TableHead>Fecha</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -951,6 +952,30 @@ const Admin = () => {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(reg.created_at).toLocaleString('es-ES')}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm("¿Eliminar esta inscripción?")) {
+                                try {
+                                  const { error } = await supabase
+                                    .from("event_registrations")
+                                    .delete()
+                                    .eq("id", reg.id);
+                                  
+                                  if (error) throw error;
+                                  toast.success("Inscripción eliminada");
+                                  loadRegistrations();
+                                } catch (error: any) {
+                                  toast.error("Error al eliminar inscripción");
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -98,10 +98,6 @@ const Navigation = () => {
                     <Shield className="w-4 h-4" />
                     Admin
                   </Button>}
-                <Button variant="outline" size="default" onClick={handleLogout} className="gap-2">
-                  <LogOut className="w-4 h-4" />
-                  Salir
-                </Button>
               </> : <Button variant="outline" size="default" onClick={() => navigate("/auth")} className="gap-2">
                 <LogIn className="w-4 h-4" />
                 Entrar
