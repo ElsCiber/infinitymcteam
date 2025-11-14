@@ -20,7 +20,7 @@ const Hero = () => {
           playsInline
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'blur(8px)' }}
+          style={{ filter: 'blur(8px)', contentVisibility: 'auto' }}
         >
           <source src="/hero-video.mp4" type="video/mp4" />
         </video>
