@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import EventModal from "./EventModal";
+import EventCounter from "./EventCounter";
 interface Event {
   id: string;
   title: string;
@@ -14,6 +15,7 @@ interface Event {
   organizer?: string;
   image_url?: string;
   featured?: boolean;
+  max_participants?: number;
 }
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -114,6 +116,13 @@ const Events = () => {
                   {event.description && <p className="text-sm text-muted-foreground line-clamp-2">
                       {event.description}
                     </p>}
+                  
+                  {event.max_participants && (
+                    <EventCounter 
+                      eventId={event.id} 
+                      maxParticipants={event.max_participants}
+                    />
+                  )}
                   
                   {event.players_count && <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <span className="text-primary">👥</span>

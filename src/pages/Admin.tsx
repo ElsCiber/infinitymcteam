@@ -55,6 +55,7 @@ interface Event {
   players_count: string;
   featured: boolean;
   registration_status?: string;
+  max_participants?: number;
 }
 
 interface TeamMember {
@@ -329,6 +330,7 @@ const Admin = () => {
         players_count: formData.get("players_count") as string,
         featured: formData.get("featured") === "on",
         image_url: imageUrl,
+        max_participants: formData.get("max_participants") ? parseInt(formData.get("max_participants") as string) : null,
       };
 
       if (editingEvent) {
@@ -646,6 +648,17 @@ const Admin = () => {
                       <div>
                         <Label htmlFor="players_count">Cantidad de jugadores</Label>
                         <Input id="players_count" name="players_count" defaultValue={editingEvent?.players_count} />
+                      </div>
+                      <div>
+                        <Label htmlFor="max_participants">Límite de inscripciones</Label>
+                        <Input 
+                          id="max_participants" 
+                          name="max_participants" 
+                          type="number" 
+                          min="1"
+                          placeholder="Dejar vacío para sin límite"
+                          defaultValue={editingEvent?.max_participants || ""} 
+                        />
                       </div>
                       <div>
                         <Label htmlFor="status">Estado</Label>
