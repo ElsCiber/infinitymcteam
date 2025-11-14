@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
 import infinityLogo from "@/assets/infinity-logo-transparent.png";
+import { useRef } from "react";
+import { useParallax } from "@/hooks/useParallax";
+
 const Hero = () => {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const parallaxOffset = useParallax(heroRef, 0.3);
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -9,9 +14,15 @@ const Hero = () => {
       });
     }
   };
-  return <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section ref={heroRef} id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Video Background */}
-      <div className="absolute inset-0">
+      <div 
+        className="absolute inset-0"
+        style={{ 
+          transform: `translateY(${parallaxOffset * 0.5}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
         <video 
           autoPlay 
           loop 

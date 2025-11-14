@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -7,6 +7,7 @@ import EventCounter from "./EventCounter";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { es } from "date-fns/locale";
+import { useParallax } from "@/hooks/useParallax";
 interface Event {
   id: string;
   title: string;
@@ -25,6 +26,8 @@ const Events = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const eventsRef = useRef<HTMLElement>(null);
+  const parallaxOffset = useParallax(eventsRef, 0.2);
   useEffect(() => {
     loadEvents();
   }, []);
@@ -84,8 +87,14 @@ const Events = () => {
       </section>;
   }
   return <>
-      <section id="events" className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-card to-background"></div>
+      <section ref={eventsRef} id="events" className="py-24 relative">
+        <div 
+          className="absolute inset-0 bg-gradient-to-b from-card to-background"
+          style={{ 
+            transform: `translateY(${parallaxOffset * 0.3}px)`,
+            transition: 'transform 0.1s ease-out'
+          }}
+        ></div>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16 animate-fade-in">
