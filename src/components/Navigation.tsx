@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { LogIn, LogOut, Shield } from "lucide-react";
+import { LogIn, LogOut, Shield, User as UserIcon } from "lucide-react";
 const Navigation = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -83,6 +83,15 @@ const Navigation = () => {
           {/* Auth & CTA Buttons */}
           <div className="flex items-center gap-4">
             {user ? <>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => navigate("/profile")}
+                  className="gap-2"
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Mi Perfil
+                </Button>
                 {isAdmin && <Button variant="outline" size="default" onClick={() => navigate("/admin")} className="gap-2">
                     <Shield className="w-4 h-4" />
                     Admin

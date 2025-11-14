@@ -45,6 +45,14 @@ const EventPlayers = ({ eventId, maxPlayers }: EventPlayersProps) => {
 
       if (error) throw error;
       setPlayerCount(count || 0);
+
+      // Auto-close registration if max players reached
+      if (maxPlayers && count && count >= maxPlayers) {
+        await supabase
+          .from("events")
+          .update({ registration_status: 'closed' })
+          .eq("id", eventId);
+      }
     } catch (error) {
       console.error("Error loading player count:", error);
     } finally {

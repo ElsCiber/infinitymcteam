@@ -118,28 +118,57 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
   }
 
   return (
-    <div className="space-y-6" onClick={(e) => e.stopPropagation()}>
-      <form onSubmit={handleAddImage} className="space-y-4 p-4 border rounded-lg" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="space-y-6" 
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <form 
+        onSubmit={handleAddImage} 
+        className="space-y-4 p-4 border rounded-lg" 
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <h3 className="font-semibold">Agregar Imagen a la Galería</h3>
-        <div>
+        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
           <Label htmlFor={`image-${eventId}`}>Imagen</Label>
-          <Input id={`image-${eventId}`} name="image" type="file" accept="image/*" required />
+          <Input 
+            id={`image-${eventId}`} 
+            name="image" 
+            type="file" 
+            accept="image/*" 
+            required 
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
         </div>
-        <div>
+        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
           <Label htmlFor={`caption-${eventId}`}>Descripción (opcional)</Label>
-          <Textarea id={`caption-${eventId}`} name="caption" />
+          <Textarea 
+            id={`caption-${eventId}`} 
+            name="caption"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
         </div>
-        <div>
+        <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
           <Label htmlFor={`display_order-${eventId}`}>Orden</Label>
           <Input 
             id={`display_order-${eventId}`} 
             name="display_order" 
             type="number" 
             defaultValue={images.length} 
-            required 
+            required
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           />
         </div>
-        <Button type="submit" className="w-full">
+        <Button 
+          type="submit" 
+          className="w-full"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Imagen
         </Button>
@@ -147,7 +176,12 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {images.map((image) => (
-          <div key={image.id} className="relative group border rounded-lg overflow-hidden">
+          <div 
+            key={image.id} 
+            className="relative group border rounded-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <img 
               src={image.image_url} 
               alt={image.caption || ""} 
@@ -157,7 +191,11 @@ const GalleryManager = ({ eventId }: GalleryManagerProps) => {
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={() => handleDeleteImage(image.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteImage(image.id);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

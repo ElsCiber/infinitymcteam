@@ -63,6 +63,33 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess, maxPlayers }: Regist
         return;
       }
 
+      // Check event registration status
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("registration_status")
+        .eq("id", eventId)
+        .single();
+
+      if (eventData?.registration_status === 'closed') {
+        toast({
+          title: "Inscripciones cerradas",
+          description: "Las inscripciones para este evento están cerradas.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (eventData?.registration_status === 'paused') {
+        toast({
+          title: "Inscripciones pausadas",
+          description: "Las inscripciones están temporalmente pausadas.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Check if event is full
       if (maxPlayers) {
         const { count } = await supabase
@@ -71,6 +98,12 @@ const RegistrationForm = ({ eventId, eventTitle, onSuccess, maxPlayers }: Regist
           .eq("event_id", eventId);
 
         if (count && count >= maxPlayers) {
+          // Auto-close if full
+          await supabase
+            .from("events")
+            .update({ registration_status: 'closed' })
+            .eq("id", eventId);
+
           toast({
             title: "Evento lleno",
             description: "Lo sentimos, este evento ya alcanzó su capacidad máxima.",

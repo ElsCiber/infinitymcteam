@@ -25,6 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Download, CheckCircle, XCircle, Pause } from "lucide-react";
 import GalleryManager from "@/components/GalleryManager";
+import DashboardStats from "@/components/DashboardStats";
 import {
   Select,
   SelectContent,
@@ -510,14 +511,22 @@ const Admin = () => {
       </nav>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="users">Usuarios</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
             <TabsTrigger value="registrations">Inscripciones</TabsTrigger>
             <TabsTrigger value="team">Equipo</TabsTrigger>
             <TabsTrigger value="audit">Auditoría</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-6">Estadísticas y Métricas</h2>
+              <DashboardStats />
+            </div>
+          </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
             <div className="bg-card border border-border rounded-lg p-6">
