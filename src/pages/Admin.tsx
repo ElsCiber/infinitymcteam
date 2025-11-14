@@ -75,6 +75,7 @@ interface Registration {
   additional_info?: string;
   created_at: string;
   event_id: string;
+  attended?: boolean;
   events?: {
     title: string;
   };
@@ -431,6 +432,20 @@ const Admin = () => {
         .eq("id", eventId);
 
       if (error) throw error;
+
+      // Si se abrieron las inscripciones, enviar notificaciones
+      if (status === 'open') {
+        const event = events.find(e => e.id === eventId);
+        if (event) {
+          await supabase.functions.invoke("send-event-notification", {
+            body: {
+              eventId: eventId,
+              title: "¡Nuevas inscripciones abiertas!",
+              message: `Las inscripciones para ${event.title} están ahora abiertas.`,
+            },
+          });
+        }
+      }
 
       toast.success(`Inscripciones ${status === 'open' ? 'abiertas' : status === 'closed' ? 'cerradas' : 'pausadas'}`);
       loadEvents();
@@ -894,10 +909,11 @@ const Admin = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Evento</TableHead>
+                  <TableHead>Evento</TableHead>
                       <TableHead>Jugador</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Usuario Minecraft</TableHead>
+                      <TableHead>Asistió</TableHead>
                       <TableHead>Fecha</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -911,6 +927,27 @@ const Admin = () => {
                         <TableCell>{reg.player_email}</TableCell>
                         <TableCell className="font-mono text-sm">
                           @{reg.minecraft_username}
+                        </TableCell>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={reg.attended || false}
+                            onChange={async (e) => {
+                              try {
+                                const { error } = await supabase
+                                  .from("event_registrations")
+                                  .update({ attended: e.target.checked })
+                                  .eq("id", reg.id);
+                                
+                                if (error) throw error;
+                                loadRegistrations();
+                                toast.success(e.target.checked ? "Asistencia marcada" : "Asistencia desmarcada");
+                              } catch (error: any) {
+                                toast.error("Error al actualizar asistencia");
+                              }
+                            }}
+                            className="w-4 h-4 cursor-pointer"
+                          />
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(reg.created_at).toLocaleString('es-ES')}
