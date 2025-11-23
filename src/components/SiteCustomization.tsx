@@ -286,66 +286,107 @@ const SiteCustomization = () => {
             Configura cómo se verá tu sitio cuando se comparta en Discord, WhatsApp, redes sociales, etc.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="og_title">Título del Embed</Label>
-            <Input
-              id="og_title"
-              value={settings.og_title || ""}
-              onChange={(e) => setSettings({ ...settings, og_title: e.target.value })}
-              placeholder="Infinity Team"
-            />
-            <Button
-              onClick={() => updateSetting("og_title", settings.og_title || "")}
-              disabled={loading}
-              size="sm"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Título"}
-            </Button>
-          </div>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="og_title">Título del Embed</Label>
+                <Input
+                  id="og_title"
+                  value={settings.og_title || ""}
+                  onChange={(e) => setSettings({ ...settings, og_title: e.target.value })}
+                  placeholder="Infinity Team"
+                />
+                <Button
+                  onClick={() => updateSetting("og_title", settings.og_title || "")}
+                  disabled={loading}
+                  size="sm"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Título"}
+                </Button>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="og_description">Descripción del Embed</Label>
-            <Input
-              id="og_description"
-              value={settings.og_description || ""}
-              onChange={(e) => setSettings({ ...settings, og_description: e.target.value })}
-              placeholder="Infinity Team organiza eventos épicos de Minecraft..."
-            />
-            <Button
-              onClick={() => updateSetting("og_description", settings.og_description || "")}
-              disabled={loading}
-              size="sm"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Descripción"}
-            </Button>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="og_description">Descripción del Embed</Label>
+                <Input
+                  id="og_description"
+                  value={settings.og_description || ""}
+                  onChange={(e) => setSettings({ ...settings, og_description: e.target.value })}
+                  placeholder="Infinity Team organiza eventos épicos de Minecraft..."
+                />
+                <Button
+                  onClick={() => updateSetting("og_description", settings.og_description || "")}
+                  disabled={loading}
+                  size="sm"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Descripción"}
+                </Button>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="og_image">Imagen del Embed</Label>
-            {settings.og_image && (
-              <img
-                src={settings.og_image}
-                alt="Embed preview"
-                className="w-full max-w-md rounded-md border"
-              />
-            )}
-            <Input
-              id="og_image"
-              type="file"
-              accept="image/png,image/jpeg,image/jpg"
-              onChange={(e) => handleFileChange(e, "og_image")}
-              disabled={uploading === "og_image"}
-            />
-            {uploading === "og_image" && (
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Subiendo imagen...
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Recomendado: 1200x630px para mejor visualización en redes sociales
-            </p>
+              <div className="space-y-2">
+                <Label htmlFor="og_image">Imagen del Embed</Label>
+                <Input
+                  id="og_image"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={(e) => handleFileChange(e, "og_image")}
+                  disabled={uploading === "og_image"}
+                />
+                {uploading === "og_image" && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Subiendo imagen...
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Recomendado: 1200x630px para mejor visualización en redes sociales
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Vista Previa del Embed</Label>
+              <div className="border rounded-lg p-4 bg-[#36393f] space-y-2">
+                <p className="text-xs text-gray-400 mb-2">Preview estilo Discord</p>
+                <div className="border-l-4 border-primary pl-3 space-y-2">
+                  <a href="#" className="text-[#00b0f4] text-sm font-semibold hover:underline block">
+                    {settings.og_title || "Infinity Team"}
+                  </a>
+                  <p className="text-gray-300 text-xs leading-relaxed">
+                    {settings.og_description || "Infinity Team organiza eventos épicos de Minecraft. Survival Games, eventos personalizados y experiencias únicas para la comunidad."}
+                  </p>
+                  {settings.og_image && (
+                    <img
+                      src={settings.og_image}
+                      alt="Embed preview"
+                      className="rounded mt-2 max-w-full h-auto max-h-[300px] object-cover"
+                    />
+                  )}
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4 bg-card space-y-2 mt-4">
+                <p className="text-xs text-muted-foreground mb-2">Preview estilo Twitter</p>
+                <div className="border rounded-lg overflow-hidden">
+                  {settings.og_image && (
+                    <img
+                      src={settings.og_image}
+                      alt="Embed preview"
+                      className="w-full h-[200px] object-cover"
+                    />
+                  )}
+                  <div className="p-3 border-t bg-muted/50">
+                    <p className="text-xs text-muted-foreground mb-1">infinity-team.com</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {settings.og_title || "Infinity Team"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {settings.og_description || "Infinity Team organiza eventos épicos de Minecraft. Survival Games, eventos personalizados y experiencias únicas para la comunidad."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
