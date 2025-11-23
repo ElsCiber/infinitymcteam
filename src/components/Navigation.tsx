@@ -103,7 +103,7 @@ const Navigation = () => {
                 Entrar
               </Button>}
             <Button variant="default" size="default" className="font-semibold">
-              Descargar Cliente
+              En Progreso...
             </Button>
           </div>
         </div>
