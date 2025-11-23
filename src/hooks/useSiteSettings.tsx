@@ -6,6 +6,9 @@ interface SiteSettings {
   secondary_color?: string;
   hero_video?: string;
   logo_url?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
 }
 
 export const useSiteSettings = () => {

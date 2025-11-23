@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import DynamicTheme from "./components/DynamicTheme";
+import { DynamicMetaTags } from "./components/DynamicMetaTags";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <DynamicTheme />
+      <DynamicMetaTags />
       <Toaster />
       <Sonner />
       <BrowserRouter>
