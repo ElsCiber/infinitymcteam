@@ -136,8 +136,114 @@ const SiteCustomization = () => {
     }
   };
 
+  const predefinedThemes = [
+    {
+      name: "Ocean Blue",
+      primary: "189 94% 43%",
+      secondary: "210 100% 12%",
+      preview: "hsl(189, 94%, 43%)"
+    },
+    {
+      name: "Sunset Orange",
+      primary: "24 95% 53%",
+      secondary: "0 72% 25%",
+      preview: "hsl(24, 95%, 53%)"
+    },
+    {
+      name: "Forest Green",
+      primary: "142 76% 36%",
+      secondary: "140 50% 15%",
+      preview: "hsl(142, 76%, 36%)"
+    },
+    {
+      name: "Royal Purple",
+      primary: "271 76% 53%",
+      secondary: "271 50% 20%",
+      preview: "hsl(271, 76%, 53%)"
+    },
+    {
+      name: "Cherry Red",
+      primary: "348 83% 47%",
+      secondary: "348 60% 20%",
+      preview: "hsl(348, 83%, 47%)"
+    },
+    {
+      name: "Golden Yellow",
+      primary: "45 93% 47%",
+      secondary: "30 80% 25%",
+      preview: "hsl(45, 93%, 47%)"
+    },
+    {
+      name: "Cyber Pink",
+      primary: "330 85% 55%",
+      secondary: "280 60% 25%",
+      preview: "hsl(330, 85%, 55%)"
+    },
+    {
+      name: "Arctic Blue",
+      primary: "195 100% 95%",
+      secondary: "210 80% 30%",
+      preview: "hsl(195, 100%, 95%)"
+    }
+  ];
+
+  const applyTheme = async (theme: typeof predefinedThemes[0]) => {
+    try {
+      setLoading(true);
+      
+      // Update primary color
+      await supabase
+        .from("site_settings")
+        .update({ setting_value: theme.primary })
+        .eq("setting_key", "primary_color");
+      
+      // Update secondary color
+      await supabase
+        .from("site_settings")
+        .update({ setting_value: theme.secondary })
+        .eq("setting_key", "secondary_color");
+      
+      setSettings({ ...settings, primary_color: theme.primary, secondary_color: theme.secondary });
+      setPreviewColors({ ...previewColors, primary_color: theme.primary, secondary_color: theme.secondary });
+      
+      toast.success(`Tema "${theme.name}" aplicado correctamente`);
+    } catch (error: any) {
+      toast.error("Error al aplicar el tema");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Temas Predefinidos</CardTitle>
+          <CardDescription>
+            Aplica una combinación de colores con un solo clic
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {predefinedThemes.map((theme) => (
+              <button
+                key={theme.name}
+                onClick={() => applyTheme(theme)}
+                disabled={loading}
+                className="group relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-border hover:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div
+                  className="w-full h-20 rounded-md shadow-lg transition-transform group-hover:scale-105"
+                  style={{ backgroundColor: theme.preview }}
+                />
+                <span className="text-sm font-medium text-foreground">{theme.name}</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Colores del Sitio</CardTitle>
