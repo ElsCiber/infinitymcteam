@@ -9,13 +9,10 @@
       const search = window.location.search;
       const hash = window.location.hash;
       
-      // Get the base path (repository name)
-      const base = '/infinity-team';
-      
       // Redirect to index with the path as a query parameter
-      if (path !== base + '/' && path !== base) {
+      if (path !== '/') {
         window.location.replace(
-          base + '/?redirect=' + encodeURIComponent(path.replace(base, '') + search + hash)
+          '/?redirect=' + encodeURIComponent(path + search + hash)
         );
       }
     </script>
