@@ -13,9 +13,9 @@ const Footer = () => {
           </div>
 
           {/* Copyright */}
-          <div className="text-sm text-muted-foreground">
-            © 2025 Infinity Team. Todos los derechos reservados.
-          </div>
+          <div className="text-sm text-muted-foreground">© 2026 Infinity Team. Todos los derechos reservados.
+
+        </div>
 
           {/* Links */}
           
